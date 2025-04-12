@@ -2,12 +2,13 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {app} from "./firebase.js"
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
+import {getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject} from "firebase/storage";
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import {GeoSearch} from "./GeoSearch.js";
 import {AddressAutocomplete} from "./AddressAutocomplete.js";
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: markerIcon2x,
@@ -24,74 +25,93 @@ const resultDiv = document.getElementById('result');
 let selectedAddress = null;
 
 // Map setup
-const map = L.map('map').setView([37.6, 14.0], 7);
+const map = L.map('map').setView([37.5079, 15.0830], 13); // Catania center
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
 let marker = null;
 
-function updateMap(lat, lon) {
+function updateMap(lat, lon, {center = true} = {}) {
     if (marker) {
         marker.setLatLng([lat, lon]);
     } else {
-        marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+        marker = L.marker([lat, lon], {draggable: true}).addTo(map);
         marker.on('dragend', function (e) {
             const pos = e.target.getLatLng();
             selectedAddress.lat = pos.lat;
             selectedAddress.lon = pos.lng;
         });
     }
-    map.setView([lat, lon], 16);
+
+    if (center) {
+        map.setView([lat, lon], 16);
+    }
 }
 
-// Allow user to click on map to set marker
 map.on('click', function (e) {
     const lat = e.latlng.lat;
     const lon = e.latlng.lng;
-    selectedAddress = {
-        displayName: 'Posizione selezionata sulla mappa',
-        lat: lat,
-        lon: lon
-    };
-    updateMap(lat, lon);
+    setSelectedAddress('Posizione selezionata sulla mappa', lat, lon);
+
+    updateMap(lat, lon, {center: false});
 });
+
+
+function setSelectedAddress(displayName, lat, lon) {
+    selectedAddress = {displayName, lat, lon};
+    addressInput.value = displayName + ": " + lat + ", " + lon;
+}
+
 
 // Auto-complete with Photon
 const geoSearch = new GeoSearch(map);
 
 let selectedAddressGlobal = document.getElementById("address")
-const autocomplete = new AddressAutocomplete(addressInput, suggestionsBox, geoSearch, (selectedAddress) => {
+const autocomplete = new AddressAutocomplete(addressInput, suggestionsBox, geoSearch, ({displayName, lat, lon}) => {
     selectedAddressGlobal = selectedAddress;
-    updateMap(selectedAddress.lat, selectedAddress.lon);
+    setSelectedAddress(displayName, lat, lon);
+    updateMap(lat, lon);
 });
 
 // Handle form submit
+function markFieldAsTouched(input) {
+    input.dataset.touched = 'true';
+    validateField(input);
+}
+
+function validateField(input) {
+    if (!input.checkValidity() && input.dataset.touched === 'true') {
+        input.classList.add('is-invalid');
+    } else {
+        input.classList.remove('is-invalid');
+    }
+}
+
+reportForm.querySelectorAll('input, select, textarea').forEach(input => {
+    input.addEventListener('blur', () => markFieldAsTouched(input));
+    input.addEventListener('input', () => validateField(input));
+});
+
 reportForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    if (!selectedAddress) {
-        alert('Seleziona o imposta una posizione sulla mappa.');
+    // Force validation check on all fields
+    reportForm.querySelectorAll('input, select, textarea').forEach(input => {
+        markFieldAsTouched(input);
+    });
+
+    if (!reportForm.checkValidity()) {
+        console.log('Validation failed');
         return;
     }
 
-    // Just printing for now — replace with your Firestore save
-    console.log({
-        email: document.getElementById('email').value,
-        sintesi: document.getElementById('summary').value,
-        descrizione: document.getElementById('description').value,
-        categoria: document.getElementById('category').value,
-        gravita: document.getElementById('gravity').value,
-        indirizzo: selectedAddress.displayName,
-        coordinate: {
-            lat: selectedAddress.lat,
-            lon: selectedAddress.lon
-        }
-    });
+    if (!selectedAddress) {
+        document.getElementById('address').classList.add('is-invalid');
 
-    resultDiv.className = 'alert alert-success';
-    resultDiv.textContent = 'Segnalazione inviata!';
-    resultDiv.classList.remove('d-none');
+    }
+
+    // Proceed with saving to Firestore...
 });
 
 const storage = getStorage(app);
@@ -149,7 +169,7 @@ addMediaBtn.addEventListener('click', () => {
             },
             async () => {
                 const url = await getDownloadURL(storageRef);
-                uploadedMedia.push({ url, storagePath: storageRef.fullPath });
+                uploadedMedia.push({url, storagePath: storageRef.fullPath});
 
                 const isImage = file.type.startsWith('image/');
                 const preview = document.createElement(isImage ? 'img' : 'video');
@@ -176,4 +196,11 @@ addMediaBtn.addEventListener('click', () => {
     };
 
     input.click();
+});
+
+const gravityInput = document.getElementById('gravity');
+const gravityValue = document.getElementById('gravityValue');
+
+gravityInput.addEventListener('input', () => {
+    gravityValue.textContent = gravityInput.value;
 });
