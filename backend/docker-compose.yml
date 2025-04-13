@@ -11,4 +11,4 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - FIREBASE_CREDENTIALS=/app/firebase-admin.json
     volumes:
-      - ${FIREBASE_CREDENTIALS_PATH}:/app/firebase-admin.json
+      - ${FIREBASE_CREDENTIALS_PATH:-/home/deploy/firebase-admin.json}:/app/firebase-admin.json
