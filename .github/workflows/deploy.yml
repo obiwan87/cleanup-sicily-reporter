@@ -32,7 +32,7 @@ jobs:
             cd /home/deploy
             
             echo "Pull latest image..."
-            docker-compose pull
+            docker compose pull
             
             echo "Restart container with env vars..."
             SPRING_PROFILES_ACTIVE=prod \
