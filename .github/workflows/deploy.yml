@@ -8,14 +8,13 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
+    environment: Prod
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-
       - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u obiwan87 --password-stdin
 
       - name: Build Docker image
         run: docker build -t ghcr.io/${{ github.repository }}:latest ./backend
