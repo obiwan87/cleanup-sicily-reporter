@@ -29,6 +29,8 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            set -e
+            
             cd /home/deploy
             
             echo "Pull latest image..."
@@ -37,7 +39,7 @@ jobs:
             echo "Restart container with env vars..."
             SPRING_PROFILES_ACTIVE=prod \
             FIREBASE_CREDENTIALS=/app/firebase-admin.json \
-            FIREBASE_ADMIN_PATH=/home/deploy/firebase-admin.json \
+            FIREBASE_CREDENTIALS_PATH=/home/deploy/firebase-admin.json \
             docker compose up -d
             
             echo "Cleanup old images..."
