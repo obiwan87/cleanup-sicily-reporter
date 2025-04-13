@@ -4,7 +4,7 @@ FROM amazoncorretto:21-alpine AS build
 WORKDIR /app
 COPY . .
 
-RUN ./gradlew bootJar
+RUN chmod +x gradlew && ./gradlew bootJar
 
 # Fase di runtime
 FROM amazoncorretto:23-alpine
