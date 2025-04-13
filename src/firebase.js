@@ -1,8 +1,8 @@
 // Import the functions you need from the SDKs you need
 import {initializeApp} from "firebase/app";
-import {getStorage} from "firebase/storage"
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+
+
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -16,4 +16,21 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+const auth = getAuth();
+
+signInAnonymously(auth)
+    .then(() => {
+        console.log('Signed in anonymously');
+    })
+    .catch((error) => {
+        console.error('Anonymous sign-in failed', error);
+    });
+
+// Optional — listen for auth state changes
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        console.log('Authenticated as UID:', user.uid);
+    }
+});
 export {app}

@@ -61,6 +61,11 @@ export class AddressAutocomplete {
         }
     }
 
+    /**
+     *
+     * @param {{properties: {district: string, city: string, postcode: string, name:string, housenumber: string}}} feature
+     * @returns {string}
+     */
     buildDisplayName(feature) {
         const parts = [];
 
@@ -122,12 +127,10 @@ export class AddressAutocomplete {
     }
 
     selectResult(feature) {
-        const displayName = feature.properties.name + (feature.properties.city ? `, ${feature.properties.city}` : '');
         const lat = feature.geometry.coordinates[1];
         const lon = feature.geometry.coordinates[0];
 
-        this.inputEl.value = displayName;
-        this.onSelect({displayName, lat, lon});
+        this.onSelect({feature, lat, lon});
         this.clearResults();
     }
 

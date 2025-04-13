@@ -1,7 +1,7 @@
 import { getClampedBounds } from './utils/geo.js';
 
 export class GeoSearch {
-    constructor(map, { minBBoxSizeMeters = 1000 } = {}) {
+    constructor(map, { minBBoxSizeMeters = 20000 } = {}) {
         this.map = map;
         this.minBBoxSizeMeters = minBBoxSizeMeters;
 

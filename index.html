@@ -21,12 +21,7 @@
 <h1 class="mb-4">Segnala un Problema Urbano</h1>
 <div class="row">
     <div class="col-12">
-        <form id="reportForm">
-            <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" placeholder="name@example.com">
-            </div>
-
+        <form id="reportForm" class="needs-validation" novalidate >
             <div class="mb-3">
                 <label for="summary" class="form-label required">Sintesi</label>
                 <input type="text" class="form-control" id="summary" placeholder="Breve descrizione del problema" required>
@@ -43,7 +38,7 @@
             <div class="mb-3">
                 <label for="category" class="form-label required">Categoria</label>
                 <select class="form-select" id="category" required>
-                    <option selected disabled>Scegli...</option>
+                    <option value="" selected disabled>Scegli...</option>
                     <option value="rifiuti">Rifiuti / Discariche</option>
                     <option value="alberi">Alberi / Verde Pubblico</option>
                     <option value="buche">Buche / Strade</option>
@@ -53,29 +48,94 @@
                     Scegli una categoria.
                 </div>
             </div>
-            <div class="mb-3">
-                <label for="address" class="form-label required">Indirizzo</label>
-                <input type="text" class="form-control" id="address" placeholder="Inserisci un indirizzo" required autocomplete="off">
-                <div id="addressSuggestions" class="list-group position-absolute" style="z-index: 1000;"></div>
-                <div class="invalid-feedback">
-                    Indica un indirizzo.
+            <div class="accordion mb-4" id="locationAccordion">
+                <!-- Address Mode -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingAddress">
+                        <span class="accordion-button collapsed" aria-expanded="false"
+                              aria-controls="collapseAddress"
+                              id="collapseAddressButton"
+                        >
+                            <label class="form-check-label w-100" for="modeAddress">
+                            <input class="form-check-input me-2" type="radio" name="locationMode" id="modeAddress" value="address">
+                                Inserisci indirizzo completo
+                            </label>
+                            <span class="invalid-feedback">Scegli una delle opzioni.</span>
+                        </span>
+                    </h2>
+                    <div id="collapseAddress" class="accordion-collapse collapse" aria-labelledby="headingAddress"
+                         data-bs-parent="#locationAccordion">
+                        <div class="accordion-body">
+
+                            <div class="mb-3">
+                                <label class="form-label required" for="street">Via / Piazza / Località</label>
+                                <input type="text" class="form-control" id="street" placeholder="Es: Via Etnea" autocomplete="off" >
+                                <div id="streetSuggestions" class="list-group position-absolute" style="z-index: 1000;"></div>
+                                <div class="invalid-feedback">Inserisci la via.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label required" for="houseNumber">Numero Civico</label>
+                                <input type="text" class="form-control" id="houseNumber" placeholder="Es: 25">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label required" for="city">Città</label>
+                                <input type="text" class="form-control" id="city" placeholder="Es: Catania">
+                                <div class="invalid-feedback">Inserisci la città.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label required" for="zipCode">CAP</label>
+                                <input type="text" class="form-control" id="zipCode" placeholder="Es: 95124">
+                                <div class="invalid-feedback">Inserisci il CAP.</div>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="mb-3">
-                <label for="houseNumber" class="form-label required">Numero Civico</label>
-                <input type="text" class="form-control" id="houseNumber" placeholder="Es: 25" autocomplete="off" required>
-                <div class="invalid-feedback">
-                    Indica un numero civico.
+
+                <!-- Map Mode -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingMap">
+                        <span class="accordion-button collapsed"
+                              id="collapseMapButton"
+                              aria-expanded="false"
+                              aria-controls="collapseMap" >
+                            <label class="form-check-label w-100" for="modeMap">
+                            <input class="form-check-input me-2" type="radio" name="locationMode" id="modeMap" value="map" required>
+                                Seleziona posizione sulla mappa
+                            </label>
+                        </span>
+                    </h2>
+                    <div id="collapseMap" class="accordion-collapse collapse" aria-labelledby="headingMap" data-bs-parent="#locationAccordion">
+                        <div class="accordion-body">
+
+                            <div class="mb-3">
+                                <label class="form-label visually-hidden" for="mapSearch">Cerca una zona</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-opacity-50"><i class="bi bi-search"></i></span>
+                                    <input type="text" class="form-control" id="mapSearch" placeholder="Cerca un luogo ...">
+                                </div>
+                                <div id="mapSearchSuggestions" class="list-group position-absolute" style="z-index: 1000;"></div>
+                            </div>
+                            <div id="map" style="height: 300px" class="mb-3"></div>
+                            <input type="hidden" id="lat">
+                            <input type="hidden" id="lon">
+                            <div id="mapModeValidationResult" class="visually-hidden"></div>
+
+                        </div>
+                    </div>
                 </div>
+
+
             </div>
 
-            <div id="map" style="height: 450px; " class="mb-3"></div>
-
             <div class="mb-3">
-                <label for="gravity" class="form-label">Gravità</label>
+                <label for="severity" class="form-label">Gravità</label>
                 <div class="d-flex align-items-center gap-2">
-                    <input type="range" class="form-range" min="1" max="5" step="1" id="gravity" value="3">
-                    <span id="gravityValue">3</span>
+                    <input type="range" class="form-range" min="1" max="5" step="1" id="severity" value="3">
+                    <span id="severityValue">3</span>
                 </div>
             </div>
             <div class="mb-3">

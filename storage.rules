@@ -1,0 +1,23 @@
+rules_version = '2';
+// Rules for storage access
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Temp uploads - only authenticated users can write
+    match /uploads/temp/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Final reports - read for everyone, write only for authenticated
+    match /uploads/reports/{reportId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Deny everything else by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
