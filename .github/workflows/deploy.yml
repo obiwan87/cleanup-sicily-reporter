@@ -30,7 +30,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-            
+            echo "Login to GHCR..."
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u obiwan87 --password-stdin
             cd /home/deploy
             
             echo "Pull latest image..."
