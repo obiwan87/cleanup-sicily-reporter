@@ -38,7 +38,7 @@ jobs:
             SPRING_PROFILES_ACTIVE=prod \
             FIREBASE_CREDENTIALS=/app/firebase-admin.json \
             FIREBASE_ADMIN_PATH=/home/deploy/firebase-admin.json \
-            docker-compose up -d
+            docker compose up -d
             
             echo "Cleanup old images..."
             docker image prune -f
