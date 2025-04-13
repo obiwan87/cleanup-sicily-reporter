@@ -7,7 +7,7 @@ COPY . .
 RUN chmod +x gradlew && ./gradlew bootJar
 
 # Fase di runtime
-FROM amazoncorretto:23-alpine
+FROM amazoncorretto:21-alpine
 
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
