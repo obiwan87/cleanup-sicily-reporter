@@ -41,6 +41,9 @@ jobs:
       - name: List backend build output
         run: ls -lh backend/build/libs
 
+      - name: Copy jar to backend dir for Docker build
+        run: cp backend/build/libs/*.jar backend/app.jar
+
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u obiwan87 --password-stdin
 

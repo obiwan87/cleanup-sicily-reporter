@@ -2,8 +2,7 @@ FROM amazoncorretto:21
 
 WORKDIR /app
 
-# Copia direttamente il jar generato dal CI
-COPY build/libs/*.jar app.jar
+COPY app.jar app.jar
 
 EXPOSE 8080
 
