@@ -46,29 +46,29 @@ tasks.withType<Test> {
 }
 
 
-val frontendDir = "${projectDir}/../frontend"
-val npmExecutable = if (System.getProperty("os.name").startsWith("Windows")) {
-    "npm.cmd"
-} else {
-    "npm"
-}
-tasks.register<Exec>("npmInstall") {
-    workingDir = file(frontendDir)
-    commandLine(npmExecutable, "install")
-}
-
-tasks.register<Exec>("npmBuild") {
-    dependsOn("npmInstall")
-    workingDir = file(frontendDir)
-    commandLine(npmExecutable, "run", "build")
-}
-
-tasks.named("processResources") {
-    dependsOn("npmBuild")
-}
-
-tasks.register("printPath") {
-    doLast {
-        println("PATH = " + System.getenv("PATH"))
-    }
-}
+//val frontendDir = "${projectDir}/../frontend"
+//val npmExecutable = if (System.getProperty("os.name").startsWith("Windows")) {
+//    "npm.cmd"
+//} else {
+//    "npm"
+//}
+//tasks.register<Exec>("npmInstall") {
+//    workingDir = file(frontendDir)
+//    commandLine(npmExecutable, "install")
+//}
+//
+//tasks.register<Exec>("npmBuild") {
+//    dependsOn("npmInstall")
+//    workingDir = file(frontendDir)
+//    commandLine(npmExecutable, "run", "build")
+//}
+//
+//tasks.named("processResources") {
+//    dependsOn("npmBuild")
+//}
+//
+//tasks.register("printPath") {
+//    doLast {
+//        println("PATH = " + System.getenv("PATH"))
+//    }
+//}

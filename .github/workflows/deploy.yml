@@ -13,6 +13,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Build frontend
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      # Build backend
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '21'
+
+      - name: Build backend jar
+        working-directory: backend
+        run: chmod +x ./gradlew && ./gradlew bootJar
+
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u obiwan87 --password-stdin
 
