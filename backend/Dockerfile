@@ -1,6 +1,11 @@
 # Fase di build
 FROM amazoncorretto:21 AS build
 
+# Install Node.js + npm
+RUN yum install -y curl && \
+    curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - && \
+    yum install -y nodejs \
+
 WORKDIR /app
 COPY . .
 
