@@ -38,6 +38,9 @@ jobs:
         working-directory: backend
         run: chmod +x ./gradlew && ./gradlew bootJar
 
+      - name: List backend build output
+        run: ls -lh backend/build/libs
+
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u obiwan87 --password-stdin
 
