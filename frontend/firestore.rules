@@ -9,8 +9,10 @@ service cloud.firestore {
       // Optional: Allow read access for everyone (public reports)
       allow read: if true;
 
-      // No update or delete by users directly
-      allow update, delete: if false;
+      // Allow update only from users who created the resource
+      allow update: if request.auth != null && request.auth.uid == resource.data.user_id;
+      // No delete by users directly
+      allow delete: if false;
     }
   }
 }

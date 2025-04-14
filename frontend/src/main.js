@@ -14,10 +14,12 @@ import {GeoSearch} from "./GeoSearch.js";
 import {AddressAutocomplete} from "./AddressAutocomplete.js";
 import {Collapse} from "bootstrap";
 import {reverseGeocode} from "./utils/geo.js";
+import {getAuth} from "firebase/auth";
 
 
 const storage = getStorage(app);
 const db = getFirestore(app)
+const auth = getAuth(app);
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -296,7 +298,11 @@ async function submitReport() {
         reportData.address = await reverseGeocode(lat, lon);
     }
 
-    const docRef = await addDoc(collection(db, 'reports'), reportData);
+    const docRef = await addDoc(collection(db, 'reports'),
+        {
+            ...reportData,
+            user_id: auth.currentUser.uid
+        });
 
     const finalMediaUrls = [];
     for (const media of uploadedMedia) {
@@ -305,7 +311,7 @@ async function submitReport() {
     }
 
 // Update Firestore doc:
-    await updateDoc(docRef, { media: finalMediaUrls });
+    await updateDoc(docRef, {media: finalMediaUrls});
 }
 
 export async function moveFile(storagePath, reportId) {
