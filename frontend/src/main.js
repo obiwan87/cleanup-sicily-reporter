@@ -5,7 +5,7 @@ import $ from 'jquery'
 
 import 'leaflet/dist/leaflet.css';
 import {app} from "./firebase.js"
-import {deleteObject, getDownloadURL, getStorage, ref, uploadBytesResumable, getBlob} from "firebase/storage";
+import {deleteObject, getBlob, getDownloadURL, getStorage, ref, uploadBytesResumable} from "firebase/storage";
 import {addDoc, collection, getFirestore, serverTimestamp, updateDoc} from 'firebase/firestore';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -15,6 +15,7 @@ import {AddressAutocomplete} from "./AddressAutocomplete.js";
 import {Collapse} from "bootstrap";
 import {reverseGeocode} from "./utils/geo.js";
 import {getAuth} from "firebase/auth";
+import {debounce} from "./utils/debounce.js";
 
 
 const storage = getStorage(app);
@@ -74,6 +75,7 @@ let marker = null;
 
 const modeAddressRadio = document.getElementById('modeAddress');
 const modeMapRadio = document.getElementById('modeMap');
+const modeGoogleMapsUrlRadio = document.getElementById('modeGoogleMapsUrl');
 
 const addressFields = [$('#city'), $('#houseNumber'), $('#zipCode'), $('#street')]
 
@@ -84,8 +86,11 @@ modeAddressRadio.addEventListener('change', () => {
             e.prop('required', true)
         })
         $('#collapseMapButton').addClass('collapsed')
+        $('#collapseGoogleMapsUrlButton').addClass('collapsed')
         $('#collapseAddressButton').removeClass('collapsed')
+
         Collapse.getOrCreateInstance(document.getElementById('collapseMap'), {toggle: false}).hide()
+        Collapse.getOrCreateInstance(document.getElementById('collapseGoogleMapsUrl'), {toggle: false}).hide()
         Collapse.getOrCreateInstance(document.getElementById('collapseAddress'), {toggle: false}).show()
 
     }
@@ -98,8 +103,27 @@ modeMapRadio.addEventListener('change', () => {
         })
         $('#collapseMapButton').removeClass('collapsed')
         $('#collapseAddressButton').addClass('collapsed')
-        Collapse.getOrCreateInstance(document.getElementById('collapseMap'), {toggle: false}).show()
+        $('#collapseGoogleMapsUrlButton').addClass('collapsed')
+
         Collapse.getOrCreateInstance(document.getElementById('collapseAddress'), {toggle: false}).hide()
+        Collapse.getOrCreateInstance(document.getElementById('collapseGoogleMapsUrl'), {toggle: false}).hide()
+        Collapse.getOrCreateInstance(document.getElementById('collapseMap'), {toggle: false}).show()
+        map.invalidateSize()
+    }
+});
+
+modeGoogleMapsUrlRadio.addEventListener('change', () => {
+    if (modeGoogleMapsUrlRadio.checked) {
+        addressFields.forEach(e => {
+            e.prop('required', false)
+        })
+        $('#collapseGoogleMapsUrlButton').removeClass('collapsed')
+        $('#collapseAddressButton').addClass('collapsed')
+        $('#collapseMapButton').addClass('collapsed')
+
+        Collapse.getOrCreateInstance(document.getElementById('collapseMap'), {toggle: false}).hide()
+        Collapse.getOrCreateInstance(document.getElementById('collapseAddress'), {toggle: false}).hide()
+        Collapse.getOrCreateInstance(document.getElementById('collapseGoogleMapsUrl'), {toggle: false}).show()
         map.invalidateSize()
     }
 });
@@ -228,6 +252,49 @@ severityInput.addEventListener('input', () => {
     severityValue.textContent = severityInput.value;
 });
 
+let googleMapsCoords = null
+const googleMapsInput = document.getElementById('googleMapsUrl')
+googleMapsInput.addEventListener('input', debounce(async e => {
+    document.getElementById('googleMapsUrlStatus').classList.remove("invisible")
+    const uriValue = googleMapsInput.value // urlencode this
+    const encodedUri = encodeURIComponent(uriValue)
+    let result = document.getElementById('googleMapsUrlModeValidationResult');
+    try {
+        const response = await fetch("/api/decode-google-maps-uri?uri=" + encodedUri)
+        if (!response.ok) {
+            result.textContent = await response.text()
+            result.classList.add('text-danger')
+            result.classList.remove('text-success')
+            result.textContent = `URL non valida`
+
+            if(reportForm.classList.contains("was-validated")) {
+                googleMapsInput.setCustomValidity("Invalid URL")
+                googleMapsInput.classList.add("is-invalid")
+                googleMapsInput.classList.remove("is-valid")
+            }
+            googleMapsCoords = null
+        } else {
+            googleMapsInput.setCustomValidity("")
+            googleMapsInput.classList.remove("is-invalid")
+            googleMapsInput.classList.add("is-valid")
+
+            result.classList.remove('text-danger')
+            result.classList.add('text-success')
+            googleMapsCoords = await response.json()
+            result.textContent = `Coordinate rilevate: ${googleMapsCoords.lat}, ${googleMapsCoords.lon}`
+        }
+
+    } catch (err) {
+        googleMapsInput.setCustomValidity("Invalid URL")
+        googleMapsInput.classList.add("is-invalid")
+        googleMapsInput.classList.remove("is-valid")
+        result.classList.add('text-danger')
+        result.classList.remove('text-success')
+        result.textContent = `URL non valida`
+        googleMapsCoords = null
+    }
+    document.getElementById('googleMapsUrlStatus').classList.add("invisible")
+}, 300))
 
 // Form submit
 reportForm.addEventListener('submit', async (e) => {
@@ -250,6 +317,23 @@ reportForm.addEventListener('submit', async (e) => {
                 .addClass('visually-hidden')
                 .text('')
             isValid |= true
+        }
+    }
+
+    if(modeGoogleMapsUrlRadio.checked) {
+        /**
+         *
+         * @type {HTMLInputElement}
+         */
+        let googleMapsUrlInput = document.getElementById("googleMapsUrl");
+        if(googleMapsCoords == null) {
+            googleMapsUrlInput.setCustomValidity("Invalid URL");
+            googleMapsUrlInput.classList.add("is-invalid")
+            googleMapsUrlInput.classList.remove("is-valid")
+        } else {
+            googleMapsUrlInput.setCustomValidity("");
+            googleMapsUrlInput.classList.add("is-valid")
+            googleMapsUrlInput.classList.remove("is-invalid")
         }
     }
 
@@ -293,6 +377,14 @@ async function submitReport() {
         const lon = selectedAddress.lon
 
         reportData.location_mode = 'map';
+        reportData.coordinates = {lat, lon};
+
+        reportData.address = await reverseGeocode(lat, lon);
+    } else if (locationMode === 'googleMapsUrl') {
+        const lat = googleMapsCoords.lat
+        const lon = googleMapsCoords.lon
+
+        reportData.location_mode = 'googleMapsUrl';
         reportData.coordinates = {lat, lon};
 
         reportData.address = await reverseGeocode(lat, lon);

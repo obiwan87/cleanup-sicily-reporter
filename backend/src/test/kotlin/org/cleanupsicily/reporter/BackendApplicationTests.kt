@@ -1,4 +1,4 @@
-package it.cleanupsicily.reporter
+package org.cleanupsicily.reporter
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest

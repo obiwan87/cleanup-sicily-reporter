@@ -1,4 +1,4 @@
-package it.cleanupsicily.reporter.config
+package org.cleanupsicily.reporter.config
 
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp

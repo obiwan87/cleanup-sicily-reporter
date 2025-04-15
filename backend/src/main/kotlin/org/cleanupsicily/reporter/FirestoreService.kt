@@ -1,4 +1,4 @@
-package it.cleanupsicily.reporter
+package org.cleanupsicily.reporter
 
 
 import com.google.firebase.FirebaseApp

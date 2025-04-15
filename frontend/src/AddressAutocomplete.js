@@ -1,3 +1,5 @@
+import {debounce} from "./utils/debounce.js";
+
 export class AddressAutocomplete {
     constructor(inputEl, listEl, geoSearch, onSelect) {
         this.inputEl = inputEl;
@@ -144,12 +146,3 @@ export class AddressAutocomplete {
 
 }
 
-function debounce(fn, delay) {
-    let timerId;
-    return (...args) => {
-        clearTimeout(timerId);
-        timerId = setTimeout(() => {
-            fn(...args);
-        }, delay);
-    };
-}
