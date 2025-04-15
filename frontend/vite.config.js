@@ -1,13 +1,13 @@
 import { defineConfig } from 'vite'
 import path from 'path'
 
-export default defineConfig({
+export default defineConfig(({command, mode}) => ({
     root: '.',  // directory di partenza (default)
 
     build: {
         outDir: path.resolve(__dirname.replace("\\", "/"), '../backend/src/main/resources/static'),
         emptyOutDir: true,
-        sourcemap: false,  // opzionale, puoi mettere true in dev
+        sourcemap: mode !== 'production',  // opzionale, puoi mettere true in dev
         rollupOptions: {
             output: {
                 assetFileNames: 'assets/[name].[hash][extname]',
@@ -15,5 +15,5 @@ export default defineConfig({
                 entryFileNames: 'assets/[name].[hash].js',
             }
         }
-    }
-})
+    },
+}))

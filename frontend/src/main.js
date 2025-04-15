@@ -1,4 +1,4 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
+import './styles/main.scss'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import L from 'leaflet';
 import $ from 'jquery'
