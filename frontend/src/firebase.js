@@ -6,12 +6,12 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyA07pGcJuoySY9hk6-x78-nGEekKQ8qhO8",
-    authDomain: "cleanup-sicily.firebaseapp.com",
-    projectId: "cleanup-sicily",
-    storageBucket: "cleanup-sicily.firebasestorage.app",
-    messagingSenderId: "1071562468865",
-    appId: "1:1071562468865:web:5fda8dfa86f6d7ef375a00"
+  apiKey: "AIzaSyAuBdnuHEz8gOV5-EOrRtLuJ0vlieToJuQ",
+  authDomain: "cleanup-sicily-test.firebaseapp.com",
+  projectId: "cleanup-sicily-test",
+  storageBucket: "cleanup-sicily-test.firebasestorage.app",
+  messagingSenderId: "328480662075",
+  appId: "1:328480662075:web:015be50a66d2f0aff2721e"
 };
 
 // Initialize Firebase

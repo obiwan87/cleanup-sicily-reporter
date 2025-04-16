@@ -349,6 +349,7 @@ reportForm.addEventListener('submit', async (e) => {
 });
 
 
+
 async function submitReport() {
     const locationMode = document.querySelector('input[name="locationMode"]:checked').value;
 
@@ -362,7 +363,7 @@ async function submitReport() {
         category,
         description,
         severity,
-        created_at: serverTimestamp(),
+        created_at: new Date().toISOString(), // o usa Date.now() se preferisci
     };
 
     if (locationMode === 'address') {
@@ -373,38 +374,43 @@ async function submitReport() {
         reportData.zip_code = document.getElementById('zipCode').value.trim();
 
     } else if (locationMode === 'map') {
-        const lat = selectedAddress.lat
-        const lon = selectedAddress.lon
+        const lat = selectedAddress.lat;
+        const lon = selectedAddress.lon;
 
         reportData.location_mode = 'map';
-        reportData.coordinates = {lat, lon};
-
+        reportData.coordinates = { lat, lon };
         reportData.address = await reverseGeocode(lat, lon);
+
     } else if (locationMode === 'googleMapsUrl') {
-        const lat = googleMapsCoords.lat
-        const lon = googleMapsCoords.lon
+        const lat = googleMapsCoords.lat;
+        const lon = googleMapsCoords.lon;
 
         reportData.location_mode = 'googleMapsUrl';
-        reportData.coordinates = {lat, lon};
-
+        reportData.coordinates = { lat, lon };
         reportData.address = await reverseGeocode(lat, lon);
     }
 
-    const docRef = await addDoc(collection(db, 'reports'),
-        {
-            ...reportData,
-            user_id: auth.currentUser.uid
+    try {
+        const response = await fetch('/api/reports', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(reportData)
         });
 
-    const finalMediaUrls = [];
-    for (const media of uploadedMedia) {
-        const newUrl = await moveFile(media.storagePath, docRef.id);
-        finalMediaUrls.push(newUrl);
-    }
+        if (!response.ok) {
+            const msg = await response.text();
+            throw new Error(`Errore dal backend: ${msg}`);
+        }
 
-// Update Firestore doc:
-    await updateDoc(docRef, {media: finalMediaUrls});
+        const id = await response.text();
+        console.log("Report salvato con ID:", id);
+    } catch (err) {
+        alert("Errore durante l'invio della segnalazione: " + err.message);
+    }
 }
+
 
 export async function moveFile(storagePath, reportId) {
     const oldRef = ref(storage, storagePath);

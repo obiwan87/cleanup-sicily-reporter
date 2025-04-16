@@ -3,7 +3,11 @@ import path from 'path'
 
 export default defineConfig({
     root: '.',  // directory di partenza (default)
-
+    server: {
+      proxy: {
+        '/api': 'http://localhost:8080'
+      }
+    },
     build: {
         outDir: path.resolve(__dirname.replace("\\", "/"), '../backend/src/main/resources/static'),
         emptyOutDir: true,

@@ -18,4 +18,13 @@ class FirestoreService(firebaseApp: FirebaseApp) {
         }
         return snapshot.documents.map { it.data }
     }
+
+
+    suspend fun saveReport(report: Map<String, Any>): String {
+        return withContext(Dispatchers.IO) {
+        val docRef = firestore.collection("reports").document()
+        docRef.set(report).get()
+        docRef.id
+        }
+    }
 }
