@@ -284,7 +284,6 @@ reportForm.addEventListener('submit', async (e) => {
     }
 });
 
-
 async function submitReport() {
     const locationMode = document.querySelector('input[name="locationMode"]:checked').value;
 
@@ -298,48 +297,49 @@ async function submitReport() {
         category,
         description,
         severity,
-        created_at: serverTimestamp(),
+        location_mode: locationMode
     };
 
     if (locationMode === 'address') {
-        reportData.location_mode = 'address';
         reportData.address = document.getElementById('street').value.trim();
         reportData.house_number = document.getElementById('houseNumber').value.trim();
         reportData.city = document.getElementById('city').value.trim();
         reportData.zip_code = document.getElementById('zipCode').value.trim();
 
     } else if (locationMode === 'map') {
-        const lat = selectedAddress.lat
-        const lon = selectedAddress.lon
-
-        reportData.location_mode = 'map';
-        reportData.coordinates = {lat, lon};
-
+        const lat = selectedAddress.lat;
+        const lon = selectedAddress.lon;
+        reportData.coordinates = { lat, lon };
         reportData.address = await reverseGeocode(lat, lon);
+
     } else if (locationMode === 'googleMapsUrl') {
-        const lat = googleMapsCoords.lat
-        const lon = googleMapsCoords.lon
-
-        reportData.location_mode = 'googleMapsUrl';
-        reportData.coordinates = {lat, lon};
-
+        const lat = googleMapsCoords.lat;
+        const lon = googleMapsCoords.lon;
+        reportData.coordinates = { lat, lon };
         reportData.address = await reverseGeocode(lat, lon);
     }
 
-    const docRef = await addDoc(collection(db, 'reports'),
-        {
-            ...reportData,
-            user_id: auth.currentUser.uid
+    try {
+        const response = await fetch("/api/reports", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(reportData)
         });
 
-    const finalMediaUrls = [];
-    for (const media of uploadedMedia) {
-        const newUrl = await moveFile(media.storagePath, docRef.id);
-        finalMediaUrls.push(newUrl);
-    }
+        if (!response.ok) {
+            throw new Error("Errore durante l'invio del report.");
+        }
 
-// Update Firestore doc:
-    await updateDoc(docRef, {media: finalMediaUrls});
+        const result = await response.text();
+        console.log(result);
+
+        // Redirect o messaggio di successo
+        window.location.href = 'thankyou.html';
+    } catch (err) {
+        alert("Errore: " + err.message);
+    }
 }
 
 export async function moveFile(storagePath, reportId) {

@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.http.MediaType
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 
 @RestController
 @RequestMapping("/api/reports")
@@ -13,12 +15,19 @@ class ReportController(
     private val pdfReportExporter: PdfReportExporter,
     private val csvReportExporter: CsvReportExporter,
     private val mapReportExporter: MapReportExporter,
-    private val excelReportExporter: ExcelReportExporter
+    private val excelReportExporter: ExcelReportExporter,
+    private val reportSubmissionService: ReportSubmissionService
 ) {
 
     @GetMapping
     suspend fun getReports(): List<Map<String, Any>> =
         firestoreService.getReports()
+
+    @PostMapping
+    suspend fun submitReport(@RequestBody data: Map<String, Any?>): ResponseEntity<String> {
+        val id = reportSubmissionService.submitReport(data)
+        return ResponseEntity.ok("Report creato con ID: $id")
+    }
 
     @GetMapping("/export/pdf", produces = [MediaType.APPLICATION_PDF_VALUE])
     suspend fun exportReportsAsPdf(): ResponseEntity<ByteArray> {
