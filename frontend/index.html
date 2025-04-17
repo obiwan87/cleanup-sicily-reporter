@@ -170,7 +170,8 @@
                                         </div>
                                     </div>
                                     <div id="googleMapsUrlModeValidationResult" class="fs-6"></div>
-
+                                    <div id="googleMapsUrlReverseGeoResult" class="fs-6">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -185,9 +186,9 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Media (Max 5 file, 10MB ciascuno)</label>
-                        <div id="mediaList" class="mb-2 d-flex flex-wrap gap-2"></div>
-                        <button type="button" class="btn btn-secondary" id="addMediaBtn">Aggiungi File</button>
+                        <div class="row g-2" id="mediaGrid">
+                            <!-- JS will generate 5 slots here -->
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-success">Invia Segnalazione</button>

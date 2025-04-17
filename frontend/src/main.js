@@ -16,6 +16,7 @@ import {Collapse} from "bootstrap";
 import {reverseGeocode} from "./utils/geo.js";
 import {getAuth} from "firebase/auth";
 import {debounce} from "./utils/debounce.js";
+import {setupMediaUpload, uploadedMedia} from "./form/setupMediaUpload.js";
 
 
 const storage = getStorage(app);
@@ -160,90 +161,7 @@ map.on('click', function (e) {
 });
 
 // Images and videos
-const mediaList = document.getElementById('mediaList');
-const addMediaBtn = document.getElementById('addMediaBtn');
-
-const uploadedMedia = []; // {url, storagePath}
-
-const TEN_MB = 10485760;
-
-addMediaBtn.addEventListener('click', () => {
-    if (uploadedMedia.length >= 5) {
-        alert('Puoi caricare al massimo 5 file.');
-        return;
-    }
-
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*,video/*';
-
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        if (file.size > TEN_MB) {
-            alert('Il file supera i 10MB.');
-            return;
-        }
-
-        const uniqueName = Date.now() + '_' + file.name;
-        const storageRef = ref(storage, 'uploads/temp/' + uniqueName);
-
-        // Skeleton Wrapper
-        const wrapper = document.createElement('div');
-        wrapper.className = 'position-relative';
-        wrapper.style.width = '100px';
-        wrapper.style.height = '100px';
-
-        // Skeleton content
-        wrapper.innerHTML = `
-      <div class="d-flex justify-content-center align-items-center bg-secondary bg-opacity-10" 
-           style="width: 100%; height: 100%;">
-        <div class="spinner-border text-secondary" role="status"></div>
-      </div>
-    `;
-
-        mediaList.appendChild(wrapper);
-
-        // Upload
-        const uploadTask = uploadBytesResumable(storageRef, file);
-
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                // Optionally handle progress % here
-            },
-            (error) => {
-                wrapper.innerHTML = '<div class="text-danger small">Errore upload</div>';
-            },
-            async () => {
-                const url = await getDownloadURL(storageRef);
-                uploadedMedia.push({url, storagePath: storageRef.fullPath});
-
-                const isImage = file.type.startsWith('image/');
-                const preview = document.createElement(isImage ? 'img' : 'video');
-                preview.src = url;
-                preview.style.width = '100px';
-                preview.style.height = '100px';
-                preview.style.objectFit = 'cover';
-                if (!isImage) preview.controls = true;
-
-                const removeBtn = document.createElement('button');
-                removeBtn.type = 'button';
-                removeBtn.className = 'btn-close position-absolute top-0 end-0';
-                removeBtn.addEventListener('click', async () => {
-                    await deleteObject(storageRef);
-                    uploadedMedia.splice(uploadedMedia.findIndex(m => m.url === url), 1);
-                    wrapper.remove();
-                });
-
-                wrapper.innerHTML = ''; // Clear skeleton
-                wrapper.appendChild(preview);
-                wrapper.appendChild(removeBtn);
-            }
-        );
-    };
-
-    input.click();
-});
+setupMediaUpload(storage)
 
 const severityInput = document.getElementById('severity');
 const severityValue = document.getElementById('severityValue');
@@ -254,20 +172,22 @@ severityInput.addEventListener('input', () => {
 
 let googleMapsCoords = null
 const googleMapsInput = document.getElementById('googleMapsUrl')
-googleMapsInput.addEventListener('input', debounce(async e => {
+googleMapsInput.addEventListener('input', debounce(async _ => {
     document.getElementById('googleMapsUrlStatus').classList.remove("invisible")
     const uriValue = googleMapsInput.value // urlencode this
     const encodedUri = encodeURIComponent(uriValue)
-    let result = document.getElementById('googleMapsUrlModeValidationResult');
+    let coordsResult = document.getElementById('googleMapsUrlModeValidationResult');
+    let reverseGeoLookupResult = document.getElementById('googleMapsUrlReverseGeoResult');
     try {
         const response = await fetch("/api/decode-google-maps-uri?uri=" + encodedUri)
         if (!response.ok) {
-            result.textContent = await response.text()
-            result.classList.add('text-danger')
-            result.classList.remove('text-success')
-            result.textContent = `URL non valida`
+            coordsResult.textContent = await response.text()
+            coordsResult.classList.add('text-danger')
+            coordsResult.classList.remove('text-success')
+            coordsResult.textContent = `URL non valida`
+            reverseGeoLookupResult.innerHTML = ''
 
-            if(reportForm.classList.contains("was-validated")) {
+            if (reportForm.classList.contains("was-validated")) {
                 googleMapsInput.setCustomValidity("Invalid URL")
                 googleMapsInput.classList.add("is-invalid")
                 googleMapsInput.classList.remove("is-valid")
@@ -278,19 +198,35 @@ googleMapsInput.addEventListener('input', debounce(async e => {
             googleMapsInput.classList.remove("is-invalid")
             googleMapsInput.classList.add("is-valid")
 
-            result.classList.remove('text-danger')
-            result.classList.add('text-success')
+            coordsResult.classList.remove('text-danger')
             googleMapsCoords = await response.json()
-            result.textContent = `Coordinate rilevate: ${googleMapsCoords.lat}, ${googleMapsCoords.lon}`
+            let lat = googleMapsCoords.lat.toFixed(5);
+            let lon = googleMapsCoords.lon.toFixed(5);
+
+            let latDir = lat >= 0 ? 'N' : 'S';
+            let lonDir = lon >= 0 ? 'E' : 'W';
+
+            let textContent = `Coordinate rilevate: ${Math.abs(lat)}° ${latDir}, ${Math.abs(lon)}° ${lonDir}`;
+
+            coordsResult.innerHTML = `<span class="badge d-inline-flex p-2 align-items-center text-bg-primary rounded-pill mb-1">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span class="px-1">${textContent}</span>
+                                        </span>`
+
+            let address = await reverseGeocode(googleMapsCoords.lat, googleMapsCoords.lon);
+            reverseGeoLookupResult.innerHTML = `<span class="badge d-inline-flex p-2 align-items-center text-bg-secondary rounded-pill">
+                                            <i class="bi bi-house"></i>
+                                            <span class="px-1">${address}</span>
+                                        </span>`
         }
 
     } catch (err) {
         googleMapsInput.setCustomValidity("Invalid URL")
         googleMapsInput.classList.add("is-invalid")
         googleMapsInput.classList.remove("is-valid")
-        result.classList.add('text-danger')
-        result.classList.remove('text-success')
-        result.textContent = `URL non valida`
+        coordsResult.classList.add('text-danger')
+        coordsResult.classList.remove('text-success')
+        coordsResult.textContent = `URL non valida`
         googleMapsCoords = null
     }
     document.getElementById('googleMapsUrlStatus').classList.add("invisible")
@@ -320,13 +256,13 @@ reportForm.addEventListener('submit', async (e) => {
         }
     }
 
-    if(modeGoogleMapsUrlRadio.checked) {
+    if (modeGoogleMapsUrlRadio.checked) {
         /**
          *
          * @type {HTMLInputElement}
          */
         let googleMapsUrlInput = document.getElementById("googleMapsUrl");
-        if(googleMapsCoords == null) {
+        if (googleMapsCoords == null) {
             googleMapsUrlInput.setCustomValidity("Invalid URL");
             googleMapsUrlInput.classList.add("is-invalid")
             googleMapsUrlInput.classList.remove("is-valid")
