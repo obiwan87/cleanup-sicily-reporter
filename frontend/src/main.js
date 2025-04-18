@@ -37,6 +37,29 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
+// ===== INSERT SNIPPET HERE =====
+if ('geolocation' in navigator) {
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const { latitude, longitude } = pos.coords;
+      // Popola i campi nascosti
+      document.getElementById('lat').value = latitude;
+      document.getElementById('lon').value = longitude;
+      // Centra la mappa e piazza il marker
+      updateMap(latitude, longitude, { center: true });
+      // Seleziona automaticamente la modalità “map”
+      document.getElementById('modeMap').checked = true;
+      Collapse
+        .getOrCreateInstance(document.getElementById('collapseMap'), { toggle: false })
+        .show();
+    },
+    err => console.error('Errore geolocazione:', err),
+    { enableHighAccuracy: true, timeout: 5000 }
+  );
+}
+// ================================
+
+
 // Form elements
 const addressInput = document.getElementById('street');
 const suggestionsBox = document.getElementById('streetSuggestions');
